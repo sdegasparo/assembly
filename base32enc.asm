@@ -1,7 +1,7 @@
 ;  Executable name : base32enc
 ;  Version         : 1.0
 ;  Created date    : 5.9.2018
-;  Last update     : 14.11.2018
+;  Last update     : 26.11.2018
 ;  Author          : Sven De Gasparo
 ;  Description     : 
 	
@@ -12,9 +12,9 @@ SECTION .data			; Section containing initialised data
 	
 SECTION .bss			; Section containing uninitialized data
 
-	input resb 64		; 
-	inputLength: equ 64	; 
-	output: resb 512	;
+	input resb 4096		; Byte reservieren für den Input
+	inputLength: equ 4096	; 
+	output: resb 4096	; Byte reservieren für den Output
 	
 
 SECTION .text			; Section containing code
@@ -22,38 +22,34 @@ SECTION .text			; Section containing code
 global 	_start			; Linker needs this to find the entry point!
 	
 _start:
-
 	
 	nop			; Keine Instruktion
 	
-
-
-
 	
 prepareInput:			; Alle Register welche ich benötige auf 0 setzen
-	xor rax, rax		; Eingabe groesse speichern
-	xor r10, r10		; Ausgabe groesse speichern
+	xor r10, r10		; Eingabe groesse speichern counter
+
 
 
 	
 read:	
 	mov rax, 0		; Gibt dem System Bescheid, dass wir lesen möchten
 	mov rdi, 0		; Fangt beim Index 0 an
-	mov rsi, input		; Es wird nach eingabe  geschrieben
-	mov rdx, inputLength	; Die BuffLen länge
+	mov rsi, input		; Es wird nach input geschrieben
+	mov rdx, inputLength	; Die inputlänge
 	add rsi, r10		; Den Pointer auf die letzte Zeilen zeigen
 	syscall			; Ruft den CPU auf um den Buffer zu fuellen
 	sub rsi, r10		; Den Pointer zurueck zum Anfang zeigen
 
-T:				; Debug
+
 	
 checkDone:	
 	cmp rax, 0		; Wenn rax=0 ist entspricht ctrl + D
-	je done			; Springe zu Fertig, eax 0 ist.
+	je done			; Springe zu Fertig, wenn rax 0 ist.
 
 ;;; checkShouldReadAnotherLine???
-	add rax, r10		; Input groesse zu rax addieren
-	mov r10, rax		; rax in r10 speichern, damit mit rax gerechnet werden kann
+	add rax, r10		 ;Input groesse zu rax addieren
+	mov r10, rax		; r10 als counter verwenden
 	cmp byte [rsi+rax-1], 10 ; Vergleiche letzten Charakter mit neuer Zeile
 	jne prepareRegister	 ; Wenn der letzte Charakter vom Input kiene neue Zeile ist dann encoden
 
@@ -66,8 +62,10 @@ prepareRegister:
 	xor rcx, rcx		; rcx
 	xor rdx, rdx		; rdx
 	xor r8, r8		; r8 zaehler fuer durchlauf
-	xor r9, r9		; r9
+	xor r9, r9		; r9 Output
+	xor r11, r11		; Ausgabe groesse counter speichern
 
+T:				; Debug
 	
 ;;; Verarbeiten
 shift:	
@@ -138,7 +136,7 @@ write:
 	mov rax, 1		; Code um zu schreiben (sys-write)
 	mov rdi, 1		; stdout fd
 	mov rsi, output		; Ausgabe Adresse
-	mov rdx, r8		; Ausgabegrösse
+	mov rdx, r11		; Ausgabegrösse
 	syscall			; Kernel aufruf
 	
 
@@ -151,8 +149,9 @@ done:
 
 addOutput:
 	mov [output+r9], cl 	; Ausgabe des Base32 Zeichen
+	inc r11			; counter für die Länge heraufzählen
 	inc rsi			; rsi um 1 erhöhen für das nächste Byte
-	dec r10
+	dec r10			; counter r10 runterzählen
 	cmp r10, 0 		; Vergleicht ob noch Daten vorhanden sind.
 	jz write		; Wenn keine Daten mehr vorhanden sind Springe zu Schreiben
 	ret			; Zurück zum Code
