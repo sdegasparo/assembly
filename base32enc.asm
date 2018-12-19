@@ -47,18 +47,11 @@ checkDone:
 	cmp rax, 0		; Wenn rax=0 ist entspricht ctrl + D
 	je done			; Springe zu Fertig, wenn rax 0 ist.
 
-;;; checkShouldReadAnotherLine???
+checkShouldReadAnotherLine:	
 	add rax, r10		 ;Input groesse zu rax addieren BRAUCHTS DAS?
-	mov rbx, 8		 ; RBX = Mulitplikator (8)
-	mul rbx			 ; rax (Anzahl Byte) * rbx (8) = Anzahl Bit
-	mov rbx, 5		 ; rbx = Divisor (5)
-	div rbx			 ; rax (Anzahl Bit) / rbx (5) = Anzahl durchgänge
-	cmp rdx, 0		 ; Überprüfen auf Rest
-	jz noAddCounter
-
-	inc rax			; Wenn es Rest gab, dann rax um 1 erhöhen
 	
-noAddCounter:	
+	
+	
 	mov r10, rax		; r10 als counter verwenden
 	
 	
@@ -78,9 +71,18 @@ prepareRegister:
 	xor r11, r11		; Ausgabe groesse counter speichern
 
 T:				; Debug
+	mov rax, r10
+	mov rbx, 8		 ; RBX = Mulitplikator (8)
+	mul rbx			 ; rax (Anzahl Byte) * rbx (8) = Anzahl Bit
+	mov rbx, 5		 ; rbx = Divisor (5)
+	div rbx			 ; rax (Anzahl Bit) / rbx (5) = Anzahl durchgänge
+	cmp rdx, 0		 ; Überprüfen auf Rest
+	jz noAddCounter
 
+	inc rax			; Wenn es Rest gab, dann rax um 1 erhöhen
 	
-
+noAddCounter:	
+	mov r10, rax		; r10 als counter verwenden
 	
 ;;; Verarbeiten
 	
@@ -175,7 +177,8 @@ write:
 	mov rsi, output		; Ausgabe Adresse
 	mov rdx, r11		; Ausgabegrösse
 	syscall			; Kernel aufruf
-	
+
+	jmp prepareInput	
 
 done:	
 	mov rax, 60		; Code um das Programm zu beenden
