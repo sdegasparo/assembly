@@ -1,9 +1,9 @@
 ;  Executable name : base32enc
-;  Version         : 1.0
+;  Version         : 2.6
 ;  Created date    : 5.9.2018
-;  Last update     : 26.11.2018
+;  Last update     : 22.12.2018
 ;  Author          : Sven De Gasparo
-;  Description     : 
+;  Description     : A Base32 Encoder
 	
 SECTION .data			; Section containing initialised data
 
@@ -12,9 +12,9 @@ SECTION .data			; Section containing initialised data
 	
 SECTION .bss			; Section containing uninitialized data
 
-	input resb 4096		; Byte reservieren für den Input
-	inputLength: equ 4096	; 
-	output: resb 4096	; Byte reservieren für den Output
+	input resb 16384	; Byte reservieren für den Input
+	inputLength: equ 16384	; 
+	output: resb 16384	; Byte reservieren für den Output
 	
 
 SECTION .text			; Section containing code
@@ -48,17 +48,16 @@ checkDone:
 	je done			; Springe zu Fertig, wenn rax 0 ist.
 
 checkShouldReadAnotherLine:	
-	add rax, r10		 ;Input groesse zu rax addieren BRAUCHTS DAS?
-	
+	add rax, r10		 ;Input groesse zu rax addieren
 	
 	
 	mov r10, rax		; r10 als counter verwenden
 	
 	
 	cmp byte [rsi+rax-1], 10 ; Vergleiche letzten Charakter mit neuer Zeile
-	jne prepareRegister	 ; Wenn der letzte Charakter vom Input kiene neue Zeile ist dann encoden
+	jne prepareRegister	 ; Wenn der letzte Charakter vom Input keine neue Zeile ist dann encoden
 
-	dec r10			; Ueberschreibe die neue Zeile
+
 	jmp read		; Lese die naechste Zeile
 
 prepareRegister:	
@@ -70,13 +69,12 @@ prepareRegister:
 	xor r9, r9		; 
 	xor r11, r11		; Ausgabe groesse counter speichern
 
-T:				; Debug
 	mov rax, r10
 	mov rbx, 8		 ; RBX = Mulitplikator (8)
 	mul rbx			 ; rax (Anzahl Byte) * rbx (8) = Anzahl Bit
 	mov rbx, 5		 ; rbx = Divisor (5)
 	div rbx			 ; rax (Anzahl Bit) / rbx (5) = Anzahl durchgänge
-	cmp rdx, 0		 ; Überprüfen auf Rest
+	cmp rdx, 0		 ; Ueberpruefen auf Rest
 	jz noAddCounter
 
 	inc rax			; Wenn es Rest gab, dann rax um 1 erhöhen
